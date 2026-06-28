@@ -22,7 +22,6 @@ PitchIQ turns two team names into a full pre-match tactical report: formations, 
 11. [Deployment](#deployment)
 12. [Testing & verification](#testing--verification)
 13. [Roadmap](#completed)
-14. [Future improvements](#future-improvements)
 
 ---
 
@@ -32,7 +31,7 @@ PitchIQ turns two team names into a full pre-match tactical report: formations, 
 - **Grounded against real World Cup data.** Every prompt is injected with verified knowledge from `backend/knowledge/` — teams, confederations, groups, squads, fixtures, stadiums — so the model is anchored to factual reference instead of free-form invention.
 - **Schema-validated, repair-aware.** Responses must match an explicit Pydantic schema. On validation failure the service automatically retries once with a *repair prompt* that includes the previous error and the rejected payload, then fails closed with a 502 if the model still can't comply.
 - **Independent deployable halves.** React frontend on Firebase Hosting, FastAPI backend on Google Cloud Run. No serving of static assets from FastAPI, no long-lived state in the API.
-- **Production hardening included.** CORS allow-list, structured error responses, immutable cache headers for hashed bundles, SPA fallback via nginx, FastAPI health endpoint at `/health` (Cloud Run probe) plus an nginx-served `/healthz` for the frontend container, secrets via Secret Manager.
+- **Production hardening included.** CORS allow-list, structured error responses, immutable cache headers for hashed bundles in `frontend/nginx.conf`, SPA fallback via nginx, FastAPI health endpoint at `/health` (Cloud Run probe) plus an nginx-served `/healthz` for the frontend container, secrets via Secret Manager.
 - **No live-knowledge claims.** The system prompt forbids inventing injuries, lineups, transfers, or live match facts. When personnel are uncertain the model describes the unit or role instead.
 
 ---
@@ -48,7 +47,7 @@ The flagship demo is a single `POST /api/analyze` call for any of four flagship 
 | **England vs Portugal** | Inverted fullbacks vs double-pivot counter-press |
 | **Japan vs Morocco** | High-tempo circulation vs disciplined low block |
 
-The frontend (`/match-analysis`) renders the response as a tactical dashboard. Each card is independently composed and accessible:
+The frontend (`/analysis` route) renders the response as a tactical dashboard. Each card is independently composed and accessible:
 
 - Formation strip for both sides
 - Key battles with zone and edge indicators
@@ -137,10 +136,6 @@ The schema also enforces a post-validation invariant: `homeTeam.name` and `awayT
 | `worldcup.groups.json` | 12 groups of 4 teams |
 | `worldcup.squads.json` | Registered squads per team |
 | `worldcup.stadiums.json` | Host venues and capacities |
-| `worldcup.teams.json` | 48 teams with FIFA codes, confederations, groups |
-| `worldcup.groups.json` | 12 groups of 4 teams |
-| `worldcup.squads.json` | Registered squads per team |
-| `worldcup.stadiums.json` | Host venues and capacities |
 | `worldcup.json` | Group-stage fixtures (group × round table) |
 | `worldcup.quali_playoffs.json` | European / intercontinental qualifying playoff slots |
 
@@ -179,8 +174,9 @@ The schema also enforces a post-validation invariant: `homeTeam.name` and `awayT
 tactiq-ai/                    ← repository folder (PitchIQ)
 ├── README.md                  ← you are here
 ├── AGENTS.md                  ← engineering guardrails
+├── SKILL.md                   ← Codex / agent workflow
 ├── docker-compose.yml         ← local dev with healthcheck gating
-├── firebase.json              ← SPA rewrite + cache headers
+├── firebase.json              ← SPA rewrite only
 ├── backend/
 │   ├── Dockerfile             ← Python 3.12-slim, non-root, PORT env
 │   ├── pyproject.toml
@@ -244,17 +240,16 @@ tactiq-ai/                    ← repository folder (PitchIQ)
         │   │   ├── FormationsSection.tsx
         │   │   ├── FactorsList.tsx
         │   │   ├── KeyBattles.tsx
+        │   │   ├── TacticalInsights.tsx
         │   │   ├── GameFlow.tsx
         │   │   ├── CoachRecommendation.tsx
         │   │   ├── AnalysisLoadingState.tsx
         │   │   ├── AnalysisErrorState.tsx
         │   │   └── TeamPanel.tsx
-        │   └── hooks/
-        ├── hooks/
+        │   └── hooks/useMatchAnalysis.ts
         ├── services/analysisService.ts
         ├── types/analysis.ts
-        ├── styles/index.css
-        └── utils/
+        └── styles/index.css
 ```
 
 ---
@@ -421,7 +416,7 @@ firebase use --add
 firebase deploy --only hosting
 ```
 
-Set `VITE_API_BASE_URL` to the deployed Cloud Run URL before building. `firebase.json` publishes `frontend/dist` and rewrites all client-side routes to `index.html` for SPA navigation. Hashed assets under `/assets/` are cached for one year with `immutable`.
+Set `VITE_API_BASE_URL` to the deployed Cloud Run URL before building. `firebase.json` publishes `frontend/dist` and rewrites all client-side routes to `index.html` for SPA navigation. Hashed assets under `/assets/` are cached for one year with `immutable` *when served by the production nginx image* (`frontend/nginx.conf`); Firebase Hosting does not honor those headers, so configure caching in `firebase.json` if you switch hosts.
 
 ### Secret management
 
@@ -433,12 +428,13 @@ Set `VITE_API_BASE_URL` to the deployed Cloud Run URL before building. `firebase
 
 ## Testing & verification
 
-#### Backend
+**Backend**
 
 ```bash
 cd backend
-pytest                                  # 49 tests, ~0.3 s
-python scripts/smoke_matchups.py        # 72 invariant checks across 4 flagship matchups
+pytest                                  # run the full pytest suite
+pytest --collect-only -q                # print the current test count
+python scripts/smoke_matchups.py        # manual smoke runner (not part of pytest)
 ```
 
 `scripts/smoke_matchups.py` exercises the full orchestration — service → context builder → prompt loader → Pydantic schema — using a deterministic stub generator. Invariants validated:
@@ -455,7 +451,9 @@ python scripts/smoke_matchups.py        # 72 invariant checks across 4 flagship 
   - `weaknesses` length 2–4 per side
 - A malformed Gemini payload is rejected with `AnalysisGenerationError` after exhausting retries
 
-#### Frontend
+> The number of pytest cases changes as the suite grows. Use `pytest --collect-only -q` as the single source of truth; do not record a hard-coded count elsewhere.
+
+**Frontend**
 
 ```bash
 cd frontend
@@ -465,14 +463,14 @@ npm run build          # Vite production build
 
 ### End-to-end readiness checklist
 
-- [x] `pytest` green (49/49)
+- [x] `pytest` green
 - [x] `npm run typecheck` clean
 - [x] `npm run build` clean
 - [x] `scripts/smoke_matchups.py` PASS for all 4 matchups + rejection regression
-- [x] `firebase.json` SPA rewrite + cache headers verified
+- [x] `firebase.json` SPA rewrite verified (no cache headers; caching lives in `frontend/nginx.conf` for the Docker image)
 - [x] Backend `Dockerfile` honours `PORT` env, non-root user
 - [x] Frontend multi-stage `Dockerfile` injects `VITE_API_BASE_URL` at build time
-- [x] `nginx.conf` SPA fallback + `/healthz` for the frontend container's probe
+- [x] `nginx.conf` SPA fallback + `/healthz` + immutable asset caching
 - [x] CORS restricted to `GET`, `POST`, `OPTIONS`
 - [x] Secrets kept out of the repo, deferred to Secret Manager
 
@@ -496,9 +494,8 @@ npm run build          # Vite production build
 
 ### In progress
 
-- UI polish
-  - Demo screenshots
-  - Loading state refinement
+- **User Interface Evolution**
+  The current UI is functional, clean, and suitable for demonstrating the product. During the hackathon, development time was intentionally prioritized toward backend architecture, AI integration, structured response validation, reliability, and Google Cloud deployment. As a result, visual polish, animations, advanced UX refinements, and overall interface design were intentionally deferred. Future development will focus on creating a more refined, modern, and polished user experience while preserving the existing functionality.
 - Production optimization
   - Response caching
   - Telemetry

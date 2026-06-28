@@ -24,8 +24,8 @@ A football intelligence web app that turns two team names into a structured pre-
 | Gemini integration | ✅ Live (`gemini-2.5-flash`) |
 | Tactical match analysis endpoint | ✅ Live |
 | Docker, Cloud Run, Firebase Hosting | ✅ Done |
-| Tests | ✅ 49/49 pytest passing |
-| In progress | UI polish (screenshots, loading state), production optimization (caching, telemetry, observability) |
+| Tests | ✅ `pytest` green (count varies; see `pytest --collect-only -q`) |
+| In progress | User Interface Evolution, production optimization (caching, telemetry, observability) |
 
 ---
 
@@ -71,7 +71,7 @@ React (Firebase Hosting)  ──HTTPS JSON──►  FastAPI (Cloud Run)
 tactiq-ai/                      ← repository folder (PitchIQ)
 ├── README.md, AGENTS.md, DEMO_SCRIPT.md, PROJECT_OVERVIEW.md
 ├── docker-compose.yml          ← local dev (frontend waits for backend healthcheck)
-├── firebase.json               ← SPA rewrite + 1-year immutable cache for hashed assets
+├── firebase.json               ← SPA rewrite only (no cache headers)
 ├── backend/
 │   ├── Dockerfile (Python 3.12-slim, non-root, PORT env)
 │   ├── pyproject.toml, requirements.txt, requirements-dev.txt
@@ -84,7 +84,6 @@ tactiq-ai/                      ← repository folder (PitchIQ)
 │   │   ├── core/
 │   │   │   ├── errors.py       ← AppError + Gemini/Analysis error subclasses
 │   │   │   └── prompt_loader.py ← string.Template over .md files
-│   │   ├── models/             ← empty (reserved for internal domain models)
 │   │   ├── prompts/            ← versioned Markdown prompt templates
 │   │   ├── schemas/            ← analysis.py, common.py
 │   │   ├── services/
@@ -92,13 +91,13 @@ tactiq-ai/                      ← repository folder (PitchIQ)
 │   │   │   ├── context_builder.py
 │   │   │   ├── gemini_service.py
 │   │   │   └── knowledge_service.py
-│   │   └── knowledge/          ← bundled World Cup 2026 JSON
+│   │   └── knowledge/          ← bundled World Cup 2026 JSON (mounted into image)
 │   ├── tests/                  ← conftest, test_api, test_analysis_service,
 │   │                             test_context_builder, test_knowledge_service
-│   └── scripts/smoke_matchups.py ← 72 invariant checks across 4 flagship matchups
+│   └── scripts/smoke_matchups.py ← manual smoke runner (not part of pytest)
 └── frontend/
     ├── Dockerfile (multi-stage: development / build / nginx production)
-    ├── nginx.conf (SPA fallback + /healthz + asset caching)
+    ├── nginx.conf (SPA fallback + /healthz + immutable asset caching for /assets/)
     ├── package.json (React 19.1, Vite 6.3, TS 5.8 strict, TanStack Query 5.81,
     │                React Router 7, Tailwind v4)
     ├── vite.config.ts, tsconfig.*
@@ -106,11 +105,10 @@ tactiq-ai/                      ← repository folder (PitchIQ)
         ├── main.tsx, app/ (App.tsx, router.tsx, providers/AppProviders.tsx)
         ├── layouts/AppLayout.tsx
         ├── pages/ (HomePage, NotFoundPage)
-        ├── features/match-analysis/ (page + 11 components + useMatchAnalysis hook)
-        ├── services/ (analysisService.ts, apiClient.ts)
+        ├── features/match-analysis/ (page + 12 components + useMatchAnalysis hook)
+        ├── services/analysisService.ts
         ├── types/analysis.ts
-        ├── styles/index.css
-        └── hooks/, utils/, components/
+        └── styles/index.css
 ```
 
 ---
@@ -242,10 +240,10 @@ Secrets are never committed; production `GEMINI_API_KEY` lives in Google Secret 
 
 ## 12. Testing & verification
 
-- **Backend:** `pytest` — 50 tests, ~0.3 s. Coverage: API routes, analysis service retry/repair logic, context builder formatting, knowledge service resolution/aliases. No network dependency.
-- **Smoke:** `python scripts/smoke_matchups.py` — 72 invariant checks across the 4 flagship matchups (team-name round-trip, predicted-winner set, scores in range, array length bounds, malformed-payload rejection).
+- **Backend:** `pytest` — full suite green. Coverage: API routes, analysis service retry/repair logic, context builder formatting, knowledge service resolution/aliases. No network dependency. Test count grows as the suite grows; the single source of truth is `pytest --collect-only -q`.
+- **Smoke:** `python scripts/smoke_matchups.py` — deterministic stub generator exercises the four flagship matchups (team-name round-trip, predicted-winner set, scores in range, array length bounds, malformed-payload rejection). Not a pytest module; treat as a manual runner.
 - **Frontend:** `npm run typecheck` (strict TS), `npm run build` (Vite production build).
-- **End-to-end readiness checklist:** all items checked in README — pytest green, typecheck clean, build clean, smoke PASS, Firebase SPA rewrite + cache headers verified, Dockerfile honours `PORT` and runs non-root, multi-stage frontend Dockerfile injects `VITE_API_BASE_URL`, nginx SPA fallback + `/healthz`, CORS restricted to `GET`/`POST`/`OPTIONS`, secrets kept out of repo.
+- **End-to-end readiness checklist:** all items checked in README — pytest green, typecheck clean, build clean, smoke PASS, `firebase.json` SPA rewrite verified (no cache headers; immutable caching lives in `frontend/nginx.conf` for the Docker image), backend Dockerfile honours `PORT` and runs non-root, multi-stage frontend Dockerfile injects `VITE_API_BASE_URL`, nginx SPA fallback + `/healthz`, CORS restricted to `GET`/`POST`/`OPTIONS`, secrets kept out of repo.
 
 ---
 
@@ -288,7 +286,7 @@ firebase deploy --only hosting
 
 ## 15. What's intentionally left for later
 
-- **UI polish:** demo screenshots, loading-state refinement.
+- **User Interface Evolution:** The current UI is functional, clean, and suitable for demonstrating the product. During the hackathon, development time was intentionally prioritized toward backend architecture, AI integration, structured response validation, reliability, and Google Cloud deployment. As a result, visual polish, animations, advanced UX refinements, and overall interface design were intentionally deferred. Future development will focus on creating a more refined, modern, and polished user experience while preserving the existing functionality.
 - **Production optimisation:** response caching, telemetry, observability.
 - The README earlier mentioned a future `worldcup.fixtures.json` placeholder; fixtures are now bundled in `worldcup.json` alongside the group table. Future enrichment of `worldcup.quali_playoffs.json` with additional slots is scoped for post-hackathon work.
 
@@ -314,4 +312,4 @@ firebase deploy --only hosting
 | `frontend/src/services/analysisService.ts` | Typed fetch + timeout + typed `AnalysisApiError` |
 | `frontend/src/types/analysis.ts` | Mirror of the Pydantic schema |
 | `docker-compose.yml` | Local dev with healthcheck-gated startup |
-| `firebase.json` | SPA rewrite + immutable asset caching |
+| `firebase.json` | SPA rewrite only; immutable asset caching lives in `frontend/nginx.conf` (the Docker image), not in `firebase.json` |

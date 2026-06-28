@@ -27,12 +27,12 @@ The script is organized into **six timed segments**. Each segment lists the goal
 - [ ] Frontend running at `http://localhost:5173` (or your deployed URL)
 - [ ] Backend running at `http://localhost:8000` with a valid `GEMINI_API_KEY`
 - [ ] `/health` returns `{"status": "healthy", "service": "tactiq-api"}` (the nginx container separately exposes `/healthz` for its own probe)
-- [ ] One browser tab on `http://localhost:5173/match-analysis` ready
-- [ ] One browser tab on `http://localhost:8000/docs` ready (for the architecture slide backup)
+- [ ] One browser tab on `http://localhost:5173/analysis` ready (the frontend route is `/analysis`, not `/match-analysis`)
+- [ ] One browser tab on `http://localhost:8000/docs` ready (for the architecture slide backup; only available when `APP_ENV != production`)
 - [ ] Terminal window with `docker compose ps` showing both services healthy (off-screen)
 - [ ] Stop any local notifications (Slack, email, antivirus popups)
 - [ ] Kill other tabs and close other apps — minimize fan noise on a laptop
-- [ ] Have a **pre-canned JSON response** open in `docs/demo-fixture.json` as a fallback if the API misbehaves
+- [ ] Have `python backend/scripts/smoke_matchups.py` ready as a fallback — it uses a deterministic stub generator that doesn't need a Gemini key
 
 ---
 
@@ -81,15 +81,15 @@ The script is organized into **six timed segments**. Each segment lists the goal
 
 **Action:** scroll down to the coach recommendation block.
 
-🎙 *"If the API ever flakes during a live demo, we have a fixture ready so the dashboard still renders something coherent. The schema is the contract — the source of truth can be the model or a fixture, the UI doesn't care."*
+🎙 *"If the API ever flakes during a live demo, we have a fallback ready — the smoke runner exercises the exact same orchestration with a deterministic stub generator, so the dashboard still renders a schema-conforming brief. The schema is the contract — the source of truth can be the model or the stub, the UI doesn't care."*
 
 ---
 
 ## Segment 5 — Engineering highlights (2:30 – 2:50)
 
-🎙 *"Three things make this production-ready. **One** — the Gemini client is fully isolated behind an interface, so we can stub it in tests and validate the entire orchestration without a key. **Two** — CORS is allow-listed, secrets live in Secret Manager, and the frontend reads the backend origin at build time. **Three** — we have a smoke runner that exercises the full pipeline across four flagship matchups and asserts seventy-two invariants, plus a regression that confirms malformed payloads get rejected with `AnalysisGenerationError` after the repair attempt. The whole backend test suite is fifty tests, green, in under a second."*
+🎙 *"Three things make this production-ready. **One** — the Gemini client is fully isolated behind an interface, so we can stub it in tests and validate the entire orchestration without a key. **Two** — CORS is allow-listed, secrets live in Secret Manager, and the frontend reads the backend origin at build time. **Three** — we have a smoke runner that exercises the full pipeline across four flagship matchups, plus a regression that confirms malformed payloads get rejected with `AnalysisGenerationError` after the repair attempt. The backend test suite is `pytest --collect-only -q` count, all green, in under a second."*
 
-**On-screen:** flash the terminal showing `pytest` output (50 passed) and `scripts/smoke_matchups.py` output (`OVERALL: PASS`).
+**On-screen:** flash the terminal showing `pytest -q` output (full suite green) and `python backend/scripts/smoke_matchups.py` output (`OVERALL: PASS`).
 
 ---
 
@@ -113,7 +113,7 @@ The script is organized into **six timed segments**. Each segment lists the goal
 | **Where do secrets live?** | `GEMINI_API_KEY` lives in Google Secret Manager and is injected into Cloud Run via `--set-secrets`. The `.env` file is gitignored. |
 | **Why React on Firebase and FastAPI on Cloud Run?** | Independent deploy lifecycles, no serving of static assets from the API, edge-cached SPA bundles, scale-to-zero on the API. |
 | **Can the model reference players by name?** | The knowledge layer injects verified squads, but personnel are described by **role and unit** (e.g. *"left-back in a back four"*) rather than by individual name unless that name is grounded in the bundled squad record. This keeps the output stable when rosters change. |
-| **How fast is the pipeline?** | End-to-end, including a single repair-retry window: **p50 ≈ 6 s**, **p95 ≈ 12 s** on `gemini-2.5-flash`. The route times out at 15 s to keep the dashboard responsive. |
+| **How fast is the pipeline?** | The backend route enforces a `GEMINI_TIMEOUT_SECONDS=45` ceiling on each Gemini call; the frontend client caps the fetch at 30 s. End-to-end latency depends on Gemini's response time plus the optional repair retry — no fabricated p50/p95 number. If Gemini stalls, the route times out cleanly and the UI surfaces a typed `AnalysisApiError`. |
 | **Will the demo break if the API rate-limits us?** | Cloud Run autoscales horizontally, and `scripts/smoke_matchups.py` doubles as a live health check — the route is fast-fail to 503 when the key is missing or quota is hit, so the UI shows a clean error instead of a hang. |
 
 ---
@@ -123,11 +123,11 @@ The script is organized into **six timed segments**. Each segment lists the goal
 1. **Day 1:** read the script out loud, three times. Cut anything you stumble over.
 2. **Day 2:** record yourself with a screen capture. Watch for filler words, dead air, and slides you didn't explain.
 3. **Day 3:** do a live run with the API on. Time each segment. Aim for **2:50 ± 5 seconds**.
-4. **Demo day:** always pre-load the form with the flagship matchup. Have the fixture file ready. Keep water nearby.
+4. **Demo day:** always pre-load the form with the flagship matchup. Have the smoke runner open in a separate terminal as the fallback. Keep water nearby.
 
 **Hard rules during the demo:**
 
-- **No apologies for tech.** If something breaks, switch to the fixture and say "we have a fallback so the schema contract still holds." Move on.
+- **No apologies for tech.** If something breaks, switch to the smoke runner and say "we have a fallback so the schema contract still holds." Move on.
 - **No live coding.** Everything you show should be the running app or the running tests.
 - **No more than three sentences per segment.** If you go over, cut a sentence — never extend.
 
