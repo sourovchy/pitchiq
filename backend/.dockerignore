@@ -1,0 +1,53 @@
+# --- Python bytecode & caches ------------------------------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Virtual environments ----------------------------------------------------
+.venv/
+venv/
+env/
+
+# --- Test, lint, type caches -------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# --- VCS metadata & editor noise --------------------------------------------
+.git/
+.gitignore
+.gitattributes
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# --- Secrets & local env -----------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# --- Logs -------------------------------------------------------------------
+*.log
+logs/
+
+# --- Tests (not required at runtime) ----------------------------------------
+tests/
+
+# --- Dev tooling / docs / scripts (not required at runtime) -----------------
+scripts/
+requirements-dev.txt
+README.md
+*.md
+!app/**/*.md
+
+# --- OS / build artifacts ----------------------------------------------------
+*.egg-info/
+build/
+dist/
+.tox/
+

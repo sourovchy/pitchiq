@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #07110d;
+  --color-ink-soft: #0b1612;
+  --color-panel: #0e1b16;
+  --color-pitch: #42e889;
+  --color-pitch-soft: #a2f4c5;
+  --color-pitch-deep: #14a866;
+  --color-pitch-glow: #6df1a8;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  background: var(--color-ink);
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      1200px 600px at 15% -10%,
+      color-mix(in srgb, var(--color-pitch) 14%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 90% 8%,
+      color-mix(in srgb, #1f6f4f 22%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      720px 480px at 50% 110%,
+      color-mix(in srgb, var(--color-pitch-deep) 16%, transparent),
+      transparent 70%
+    ),
+    var(--color-ink);
+  background-attachment: fixed;
+  line-height: 1.5;
+}
+
+/* Subtle film grain + grid texture overlay used by premium cards/sections. */
+.bg-premium-mesh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--color-pitch) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-pitch) 6%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  mask-image: radial-gradient(
+    900px 500px at 50% 0%,
+    #000 30%,
+    transparent 80%
+  );
+  opacity: 0.45;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-pitch) 30%, transparent);
+  color: #ffffff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-pitch);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0
+      color-mix(in srgb, var(--color-pitch) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 8px
+      color-mix(in srgb, var(--color-pitch) 0%, transparent);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px color-mix(in srgb, #ffffff 4%, transparent) inset;
+  caret-color: #ffffff;
+}
+

@@ -1,0 +1,2 @@
+"""PitchIQ backend application."""
+

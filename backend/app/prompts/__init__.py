@@ -1,0 +1,2 @@
+"""Versioned Gemini prompt templates."""
+

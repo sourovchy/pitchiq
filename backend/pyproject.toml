@@ -1,0 +1,11 @@
+[project]
+name = "tactiq-ai-backend"
+version = "0.1.0"
+description = "PitchIQ REST API"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+addopts = "-q"
+pythonpath = ["."]
+testpaths = ["tests"]
+
