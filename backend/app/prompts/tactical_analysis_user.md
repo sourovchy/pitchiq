@@ -33,7 +33,5 @@ Run through these four steps in order before writing JSON. The output is JSON on
 
 # Voice
 
-Professional, analytical, varied in sentence length. Avoid the cliche phrases listed in the system prompt. One specific observation per sentence. No padding, no restating the question.
-
-Return only the schema-conforming JSON object.
+Professional, analytical, varied in sentence length. One specific observation per sentence. No padding, no restating the question.
 
