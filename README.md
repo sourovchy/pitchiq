@@ -402,11 +402,19 @@ gcloud run deploy tactiq-api \
   --source backend \
   --region YOUR_REGION \
   --allow-unauthenticated \
+  --min-instances 1 \
+  --max-instances 5 \
+  --concurrency 10 \
+  --timeout 120 \
   --set-env-vars APP_ENV=production,CORS_ORIGINS=https://YOUR_PROJECT.web.app \
   --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
 `backend/Dockerfile` runs Uvicorn as a non-root user and reads `PORT` from the environment, so Cloud Run's injected port is honoured automatically.
+
+#### Recommended Cloud Run sizing rationale
+
+The four scaling flags above reflect a hobby-project trade-off: keep one instance warm so the first request after a quiet window doesn't pay the 4–8 s cold-start tax, cap concurrency at 10 because each `/api/analyze` spends ~10–40 s waiting on Gemini and queueing 80 of them only inflates tail latency, bound max-instances at 5 so a stray demo-day link can't burn through the free tier, and shorten the request timeout to 120 s (above the worst-case `2 × 45 s` Gemini orchestration path) so a stuck request fails fast instead of lingering for the default 300 s. CPU allocation, memory, vCPU count, and the single-Uvicorn-worker `CMD` in the Dockerfile are deliberately left at their defaults; revisit them after measuring real traffic.
 
 ### Frontend — Firebase Hosting
 

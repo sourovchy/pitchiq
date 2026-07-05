@@ -256,9 +256,15 @@ gcloud run deploy tactiq-api \
   --source backend \
   --region YOUR_REGION \
   --allow-unauthenticated \
+  --min-instances 1 \
+  --max-instances 5 \
+  --concurrency 10 \
+  --timeout 120 \
   --set-env-vars APP_ENV=production,CORS_ORIGINS=https://YOUR_PROJECT.web.app \
   --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
+
+> **Sizing rationale.** `--min-instances 1` keeps one container warm to eliminate cold starts (4–8 s import + knowledge init). `--max-instances 5` caps cost under burst. `--concurrency 10` bounds per-instance queue depth because each analysis holds the event loop ~10–40 s in Gemini I/O. `--timeout 120` is above the worst-case `2 × 45 s` orchestration path but well below the 300 s default, so stuck requests fail fast. CPU allocation, memory, vCPU count, and Uvicorn workers are left at defaults; revisit after measuring real traffic.
 
 **Frontend — Firebase Hosting:**
 
