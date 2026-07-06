@@ -1,27 +1,57 @@
 # PitchIQ
 
-> **Football Intelligence, Reimagined.**
-> Built for **Hack Days CUET 2026** — a Gemini-powered tactical match analysis platform with grounded, structured, schema-validated AI output ready for production dashboards.
+> Football Intelligence, Reimagined.
 
-PitchIQ turns two team names into a full pre-match tactical report: formations, playing styles, strengths and weaknesses, key player battles, expected game flow, coaching recommendations, and four comparative tactical scores. The whole pipeline is deterministic at the orchestration layer and grounded against the FIFA World Cup 2026 dataset.
+[![React](https://img.shields.io/badge/React-19.1-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-gemini--2.5--flash-8E63FF)](https://ai.google.dev/)
+[![Firebase Hosting](https://img.shields.io/badge/Firebase-Hosting-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Google Cloud Run](https://img.shields.io/badge/Google%20Cloud-Run-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+
+<p align="center">
+  <img src="assets/homepage.png" alt="PitchIQ homepage screenshot" style="width: 100%; height: auto; max-width: 1200px;" />
+</p>
+
+🌐 **Live Demo:** <https://pitchiq-ai.web.app>
+
+PitchIQ is an AI-powered platform for football tactical intelligence that turns two FIFA World Cup 2026 teams into a structured pre-match tactical brief. The stack combines a React and TypeScript frontend with a FastAPI backend that uses Google Gemini to generate schema-validated analysis grounded in bundled World Cup data.
+
+PitchIQ was conceived, designed, built, and deployed in a single day at Hack Days CUET, where it received the Google Cloud – Best Use of Google Cloud award. Since then, the core application and its architecture have remained the same; the repository has continued to mature through documentation, deployment refinement, production hardening, testing, and general code and repository quality improvements.
+
+If you want to try it locally, start with the repository root and run `docker compose up --build`.
+
+## Awards & Recognition
+
+<p align="center">
+  <img src="assets/hack-days-award.svg" alt="Google Cloud Award recognition for PitchIQ" style="width: 70%; height: auto; max-width: 560px;" />
+</p>
+
+PitchIQ received the Google Cloud – Best Use of Google Cloud award at Hack Days CUET.
+
+**Hackathon Submission:** <https://devpost.com/software/pitchiq-5rblm7>
 
 ---
 
 ## Table of contents
 
-1. [Highlights](#highlights)
-2. [Demo](#demo)
-3. [How it works](#how-it-works)
-4. [Architecture](#architecture)
-5. [Repository layout](#repository-layout)
-6. [Technology](#technology)
-7. [Prerequisites](#prerequisites)
-8. [Local setup](#local-setup)
-9. [Environment variables](#environment-variables)
-10. [API reference](#api-reference)
-11. [Deployment](#deployment)
-12. [Testing & verification](#testing--verification)
-13. [Roadmap](#completed)
+1. [Awards & Recognition](#awards--recognition)
+2. [Highlights](#highlights)
+3. [Demo](#demo)
+4. [How it works](#how-it-works)
+5. [Architecture](#architecture)
+6. [Repository layout](#repository-layout)
+7. [Technology](#technology)
+8. [Prerequisites](#prerequisites)
+9. [Local setup](#local-setup)
+10. [Environment variables](#environment-variables)
+11. [API reference](#api-reference)
+12. [Deployment](#deployment)
+13. [Post-Deployment Verification](#post-deployment-verification)
+14. [Deployment Best Practices](#deployment-best-practices)
+15. [Testing & verification](#testing--verification)
+16. [Status](#status)
 
 ---
 
@@ -147,7 +177,7 @@ The schema also enforces a post-validation invariant: `homeTeam.name` and `awayT
 
 ```text
 ┌─────────────────────────────────────────┐         ┌─────────────────────────────────────────┐
-│  Firebase Hosting (frontend/dist)       │         │  Google Cloud Run (tactiq-api)           │
+│  Firebase Hosting (frontend/dist)       │         │  Google Cloud Run (PitchIQ API)         │
 │  ─────────────────────────────────────  │         │  ─────────────────────────────────────  │
 │  React 19 + Vite 6 + TypeScript 5.8     │  HTTPS  │  FastAPI 0.115 + Pydantic 2             │
 │  TanStack Query 5  │  React Router 7    │ ──────► │  Uvicorn (PORT env, non-root user)      │
@@ -171,7 +201,7 @@ The schema also enforces a post-validation invariant: `homeTeam.name` and `awayT
 ## Repository layout
 
 ```text
-tactiq-ai/                    ← repository folder (PitchIQ)
+PitchIQ/                   ← repository folder (PitchIQ)
 ├── README.md                  ← you are here
 ├── AGENTS.md                  ← engineering guardrails
 ├── SKILL.md                   ← Codex / agent workflow
@@ -387,7 +417,7 @@ Error responses (all follow `{ "error": { "code": "...", "message": "..." } }`):
 
 ### `GET /health`
 
-Returns `{ "status": "healthy", "service": "tactiq-api" }`. This is the FastAPI health endpoint mounted at the root of `api_router`; it is what Cloud Run's container probe should target.
+Returns `{ "status": "healthy", "service": "pitchiq-api" }`. This is the FastAPI health endpoint mounted at the root of `api_router`; it is what Cloud Run's container probe should target.
 
 > The frontend nginx container also serves a lightweight `/healthz` route for its own platform probe — that endpoint is owned by the static site, not by the API.
 
@@ -395,10 +425,12 @@ Returns `{ "status": "healthy", "service": "tactiq-api" }`. This is the FastAPI 
 
 ## Deployment
 
+> **See also:** [Post-Deployment Verification](#post-deployment-verification) and [Deployment Best Practices](#deployment-best-practices) for critical verification steps after deploying to production.
+
 ### Backend — Google Cloud Run
 
 ```bash
-gcloud run deploy tactiq-api \
+gcloud run deploy pitchiq-api \
   --source backend \
   --region YOUR_REGION \
   --allow-unauthenticated \
@@ -406,7 +438,7 @@ gcloud run deploy tactiq-api \
   --max-instances 5 \
   --concurrency 10 \
   --timeout 120 \
-  --set-env-vars APP_ENV=production,CORS_ORIGINS=https://YOUR_PROJECT.web.app \
+  --set-env-vars APP_ENV=production,CORS_ORIGINS=https://pitchiq-ai.web.app \
   --set-secrets GEMINI_API_KEY=GEMINI_API_KEY:latest
 ```
 
@@ -431,6 +463,108 @@ Set `VITE_API_BASE_URL` to the deployed Cloud Run URL before building. `firebase
 - Create the Gemini key as a Secret Manager secret named `GEMINI_API_KEY`.
 - Grant the Cloud Run service account `secretmanager.secretAccessor` on that secret.
 - Reference it via `--set-secrets` (shown above) so it never appears in the container's env in plaintext.
+
+---
+
+## Post-Deployment Verification
+
+After deploying to Cloud Run and Firebase Hosting, verify the production setup with these steps:
+
+### Backend Verification
+
+```bash
+# 1. Verify Cloud Run deployment succeeded
+gcloud run services describe pitchiq-api --region YOUR_REGION
+
+# 2. Check environment variables are set correctly
+gcloud run services describe pitchiq-api --region YOUR_REGION \
+  --format='value(spec.template.spec.containers[0].env)'
+
+# 3. Verify health endpoint returns 200
+curl -I https://YOUR_CLOUD_RUN_URL/health
+
+# 4. Test CORS preflight for OPTIONS /api/analyze
+curl -X OPTIONS https://YOUR_CLOUD_RUN_URL/api/analyze \
+  -H "Origin: https://pitchiq-ai.web.app" \
+  -H "Access-Control-Request-Method: POST" \
+  -v
+
+# Expected response: HTTP 200 with Access-Control-Allow-Origin header
+```
+
+### Frontend Verification
+
+```bash
+# 1. Verify frontend deployed to Firebase Hosting
+firebase hosting:channel:list
+
+# 2. Test SPA routing (should return index.html, not 404)
+curl -I https://pitchiq-ai.web.app/analysis
+curl -I https://pitchiq-ai.web.app/nonexistent-route
+
+# 3. Verify health endpoint
+curl -I https://pitchiq-ai.web.app/healthz
+# Expected: HTTP 200 with "healthy"
+```
+
+### End-to-End Production Verification
+
+```bash
+# 1. Open https://pitchiq-ai.web.app in your browser
+# 2. Fill the form with a valid matchup (e.g., Argentina vs France)
+# 3. Click "Analyze Matchup"
+# 4. Verify:
+#    ✓ Dashboard loads within 30 seconds
+#    ✓ No errors in browser console
+#    ✓ All tactical cards populate with valid data
+#    ✓ Team names match the request
+#    ✓ Scores are in range [0, 100]
+#    ✓ Network tab shows:
+#      - POST /api/analyze → 200 with analysis data
+#      - No CORS errors
+```
+
+### Troubleshooting Deployment Issues
+
+| Issue | Diagnosis | Resolution |
+| --- | --- | --- |
+| CORS errors in browser console | `CORS_ORIGINS` does not include the Firebase domain | Update Cloud Run: `gcloud run services update pitchiq-api --set-env-vars CORS_ORIGINS=https://pitchiq-ai.web.app` |
+| Backend returns 503 on `/api/analyze` | `GEMINI_API_KEY` not set or inaccessible | Verify secret: `gcloud secrets versions list GEMINI_API_KEY` and check service account permissions |
+| Frontend SPA routes return 404 | `firebase.json` rewrite rule missing or incorrect | Verify `firebase.json` contains the SPA rewrite rule shown above |
+| Backend takes >120 seconds to respond | Gemini provider latency or timeout | Check `GEMINI_TIMEOUT_SECONDS` (default 45 s per request, max 2 attempts = 90 s + overhead) |
+| Cold-start latency on first request | Cloud Run instance warming up | Expected behavior; `--min-instances 1` keeps one warm. Monitor with Cloud Run metrics. |
+
+---
+
+## Deployment Best Practices
+
+### Before Every Backend Deployment
+
+- **Update `CORS_ORIGINS`** if the Firebase Hosting domain changes (e.g., after switching projects or enabling preview channels). The frontend origin must be in `CORS_ORIGINS` before the backend is deployed.
+- **Verify `GEMINI_API_KEY` exists** in Google Secret Manager with the correct name. Misspelled secret names cause silent 503 errors.
+- **Test locally** with `docker compose up` to catch configuration errors before deploying.
+- **Check Cloud Run quotas** to ensure you have capacity for the desired resource allocation.
+
+### Before Every Frontend Deployment
+
+- **Set `VITE_API_BASE_URL`** to the correct Cloud Run URL (with trailing slash removed). Hard-coded URLs are burned into the bundle at build time.
+- **Run `npm run build`** and test the production bundle locally with `npm run preview` to catch build-time errors.
+- **Verify `firebase.json` SPA rewrite rule** is present and targets `/index.html` (not `/index.html.gz` or other variants).
+
+### After Every Deployment
+
+- **Run the end-to-end verification** steps above within 5 minutes of deploying. Production issues are easiest to debug while the deploy is fresh.
+- **Check Cloud Run logs** for any errors: `gcloud run services logs read pitchiq-api --limit 50 --region YOUR_REGION`.
+- **Monitor Cloud Run metrics** (CPU, memory, latency, error rate) in the Cloud Console.
+- **Test from a different network** (e.g., mobile hotspot) to verify DNS and edge caching work correctly.
+
+### Common Pitfalls
+
+- **Forgetting to set `CORS_ORIGINS`** before deploying: Even if the backend is live, the browser will reject requests from unlisted origins.
+- **Building frontend with old `VITE_API_BASE_URL`**: The frontend bundle is immutable once deployed. Changing the backend URL requires rebuilding and redeploying the frontend.
+- **Using `http://` instead of `https://` in CORS origins**: Most CDNs and browsers reject mixed-origin requests. Always use `https://` in production.
+- **Leaving `APP_ENV` as `development`**: The FastAPI docs endpoint (`/docs`, `/redoc`) is only disabled when `APP_ENV=production`. Exposing the docs in production can leak API details.
+- **Not monitoring Cold Start latency**: A first request after ~15 minutes of inactivity will take 4–8 seconds. Plan your demo or monitoring accordingly.
 
 ---
 
@@ -484,31 +618,7 @@ npm run build          # Vite production build
 
 ---
 
-### Completed
+## Status
 
-- Project setup
-- Frontend application
-- Backend API
-- Gemini integration
-- AI Tactical Match Analysis (live)
-- Deployment
-  - Docker
-  - Cloud Run
-  - Firebase Hosting
-- Documentation
-  - `README.md`
-  - `AGENTS.md`
-  - `DEMO_SCRIPT.md`
-
-### In progress
-
-- **User Interface Evolution**
-  The current UI is functional, clean, and suitable for demonstrating the product. During the hackathon, development time was intentionally prioritized toward backend architecture, AI integration, structured response validation, reliability, and Google Cloud deployment. As a result, visual polish, animations, advanced UX refinements, and overall interface design were intentionally deferred. Future development will focus on creating a more refined, modern, and polished user experience while preserving the existing functionality.
-- Production optimization
-  - Response caching
-  - Telemetry
-  - Observability
-
----
-
-Built for **Hack Days CUET 2026**.
+PitchIQ has reached a stable, production-ready milestone for its initial public release.
+The current repository reflects a working end-to-end experience for tactical analysis, with verified frontend and backend delivery, deployment support, and a documented testing workflow.

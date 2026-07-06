@@ -1,6 +1,6 @@
-# PitchIQ — 3-Minute Demo Script
+# PitchIQ — Demo Script
 
-> **Hack Days CUET 2026**
+> A 3-minute presentation sequence for demoing PitchIQ to engineers, product teams, and stakeholders.
 > Total budget: **3 minutes 0 seconds** (+30 s buffer for transitions and questions)
 
 The script is organized into **six timed segments**. Each segment lists the goal, the on-screen artifact, the spoken narration, and the back-pocket action if anything misbehaves on stage.
@@ -26,7 +26,7 @@ The script is organized into **six timed segments**. Each segment lists the goal
 
 - [ ] Frontend running at `http://localhost:5173` (or your deployed URL)
 - [ ] Backend running at `http://localhost:8000` with a valid `GEMINI_API_KEY`
-- [ ] `/health` returns `{"status": "healthy", "service": "tactiq-api"}` (the nginx container separately exposes `/healthz` for its own probe)
+- [ ] `/health` returns `{"status": "healthy", "service": "pitchiq-api"}` (the nginx container separately exposes `/healthz` for its own probe)
 - [ ] One browser tab on `http://localhost:5173/analysis` ready (the frontend route is `/analysis`, not `/match-analysis`)
 - [ ] One browser tab on `http://localhost:8000/docs` ready (for the architecture slide backup; only available when `APP_ENV != production`)
 - [ ] Terminal window with `docker compose ps` showing both services healthy (off-screen)
@@ -108,7 +108,7 @@ The script is organized into **six timed segments**. Each segment lists the goal
 | **Why Gemini Flash and not Pro?** | Flash gives sub-second p50 latency at our score quality bar. The repair prompt handles the rare drift cases. |
 | **How do you avoid hallucinated facts?** | The system prompt forbids live-knowledge claims, the knowledge layer injects verified teams/squads/groups, and personnel are described by role/unit when uncertain. |
 | **What if Gemini returns malformed JSON?** | Pydantic rejects it, the service retries once with a repair prompt that includes the validation error, and the route returns a clean 502 if it still fails. The UI never sees garbage. |
-| **Is the API rate-limited?** | Cloud Run scales horizontally; per-user rate limiting is on the post-hackathon roadmap. |
+| **Is the API rate-limited?** | Cloud Run scales horizontally; per-user rate limiting is on the future roadmap. |
 | **Can I run it without a Gemini key?** | Yes — `pytest` and `scripts/smoke_matchups.py` use a deterministic stub generator that returns schema-conforming JSON. The route itself returns 503 when the key is missing. |
 | **Where do secrets live?** | `GEMINI_API_KEY` lives in Google Secret Manager and is injected into Cloud Run via `--set-secrets`. The `.env` file is gitignored. |
 | **Why React on Firebase and FastAPI on Cloud Run?** | Independent deploy lifecycles, no serving of static assets from the API, edge-cached SPA bundles, scale-to-zero on the API. |
@@ -133,4 +133,4 @@ The script is organized into **six timed segments**. Each segment lists the goal
 
 ---
 
-Built with ⚽ for **Hack Days CUET 2026**.
+Built with ⚽ for football.
