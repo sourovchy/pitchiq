@@ -5,7 +5,7 @@ description: Build and maintain the PitchIQ football intelligence monorepo (Foot
 
 # Work on PitchIQ
 
-PitchIQ is a single-purpose monorepo: a React frontend and a FastAPI backend that turns two FIFA World Cup 2026 team names into a structured tactical brief. Before touching anything, internalize the architecture in `AGENTS.md` and treat the rules in this file as the order of operations for any change.
+PitchIQ is a single-purpose, production-ready monorepo: a React frontend and a FastAPI backend that turns two FIFA World Cup 2026 team names into a structured tactical brief. Before touching anything, internalize the architecture in `AGENTS.md` and treat the rules in this file as the order of operations for any change.
 
 ## Deployment boundary (always)
 
@@ -30,6 +30,21 @@ Run these steps for every change. Skip none.
 8. **Update frontend types and components together.** Change `frontend/src/types/analysis.ts` first, then feature-local components under `frontend/src/features/match-analysis/components/`. Co-locate new hooks under the feature. Avoid `frontend/src/components/`, `frontend/src/hooks/`, `frontend/src/utils/`, `frontend/src/assets/` for an MVP.
 9. **Verify locally before handoff.** `docker compose up` boots both services (backend healthcheck gates the frontend). Run `pytest` in `backend/` and `npm run typecheck && npm run build` in `frontend/`. The test count for the README comes from `pytest --collect-only -q`; never write a number you did not just measure.
 10. **Verify deployment readiness.** Backend image: non-root user, `$PORT` honored, healthcheck `GET /health` returns `200`. Frontend image: `/healthz` returns `200 healthy`, SPA rewrites to `/index.html`, hashed assets cached immutable. Secrets: `GEMINI_API_KEY` in Secret Manager (Cloud Run) or `.env` (local), never in `firebase.json` or `VITE_` variables.
+
+## Deployment verification (always required)
+
+After deploying backend or frontend changes to production, run the verification checklist in [README.md → Post-Deployment Verification](README.md#post-deployment-verification) **within 5 minutes** of deployment. Critical checks:
+
+- ✓ `CORS_ORIGINS` includes the correct Firebase domain (`https://pitchiq-ai.web.app` for production)
+- ✓ `VITE_API_BASE_URL` in the frontend bundle points to the correct Cloud Run URL
+- ✓ `GEMINI_API_KEY` is set in Secret Manager and accessible by the Cloud Run service account
+- ✓ `/health` endpoint returns `200 healthy`
+- ✓ OPTIONS preflight request to `/api/analyze` returns `200` with correct CORS headers
+- ✓ One complete analysis request from `https://pitchiq-ai.web.app` completes within 30 seconds
+- ✓ No CORS errors in the browser console
+- ✓ All tactical cards populate with valid data
+
+Never consider a deployment complete until all verification checks pass.
 
 ## Gemini-specific rules
 

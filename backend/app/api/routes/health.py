@@ -7,5 +7,5 @@ router = APIRouter(tags=["system"])
 
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
-    return HealthResponse(status="healthy", service="tactiq-api")
+    return HealthResponse(status="healthy", service="pitchiq-api")
 

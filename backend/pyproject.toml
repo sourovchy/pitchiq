@@ -1,5 +1,5 @@
 [project]
-name = "tactiq-ai-backend"
+name = "pitchiq-backend"
 version = "0.1.0"
 description = "PitchIQ REST API"
 requires-python = ">=3.12"

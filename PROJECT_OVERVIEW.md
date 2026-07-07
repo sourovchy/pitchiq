@@ -25,7 +25,8 @@ A football intelligence web app that turns two team names into a structured pre-
 | Tactical match analysis endpoint | ✅ Live |
 | Docker, Cloud Run, Firebase Hosting | ✅ Done |
 | Tests | ✅ `pytest` green (count varies; see `pytest --collect-only -q`) |
-| In progress | User Interface Evolution, production optimization (caching, telemetry, observability) |
+| Shipped | Result cache: in-process LRU (`analysis_cache_enabled`, `analysis_cache_size`, `AnalysisService.cache_info()`); see [§7 In-process analysis cache](#7-in-process-analysis-cache) |
+| In progress | User Interface Evolution |
 
 ---
 
@@ -145,6 +146,15 @@ Three versioned Markdown templates under `backend/app/prompts/`:
 - **`tactical_analysis_repair.md`** — Retry prompt interpolating `$validation_error` and `$invalid_response` so the model can self-correct.
 
 `PromptLoader` uses Python `string.Template` for safe variable substitution.
+
+### In-process analysis cache
+
+`AnalysisService` memoises successful analysis responses in-process using `functools.lru_cache`. Identical `(homeTeam, awayTeam)` requests skip Gemini I/O and return from memory in milliseconds.
+
+- Toggle: `ANALYSIS_CACHE_ENABLED` (`Settings.analysis_cache_enabled`, default `True`). When disabled, every request hits Gemini.
+- Capacity: `ANALYSIS_CACHE_SIZE` (`Settings.analysis_cache_size`, default `128`; range `1–1024`). Used directly as `lru_cache(maxsize=...)`.
+- Observability: `AnalysisService.cache_info()` returns `hits`, `misses`, `maxsize`, `currsize` for tests and runtime introspection; exercised by `backend/tests/test_analysis_service.py`.
+- Scope: per-process; not shared across Cloud Run instances and not persisted. Cache keys are the canonical team-name pair from `KnowledgeService`.
 
 ---
 

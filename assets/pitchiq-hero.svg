@@ -1,0 +1,28 @@
+<svg viewBox="0 0 1400 480" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="480" rx="32" fill="#06131C"/>
+  <rect x="32" y="32" width="1336" height="416" rx="24" fill="url(#bg)" stroke="#1C3140" stroke-width="2"/>
+  <circle cx="1120" cy="132" r="182" fill="#102C3C" fill-opacity="0.8"/>
+  <circle cx="1124" cy="132" r="122" stroke="#3BE4C2" stroke-width="2" stroke-dasharray="5 5"/>
+  <rect x="104" y="100" width="380" height="260" rx="24" fill="#07131B" stroke="#163645" stroke-width="2"/>
+  <path d="M176 262C224 190 276 144 325 144C374 144 410 188 455 263" stroke="#66F2DB" stroke-width="10" stroke-linecap="round"/>
+  <path d="M208 238C236 208 268 188 306 188C344 188 371 208 399 238" stroke="#7EC6FF" stroke-width="8" stroke-linecap="round"/>
+  <rect x="186" y="142" width="92" height="20" rx="10" fill="#7EC6FF"/>
+  <rect x="293" y="142" width="126" height="20" rx="10" fill="#66F2DB"/>
+  <rect x="636" y="124" width="340" height="54" rx="16" fill="#0A1B24" stroke="#193C4D"/>
+  <rect x="636" y="198" width="470" height="24" rx="12" fill="#13343E"/>
+  <rect x="636" y="232" width="430" height="24" rx="12" fill="#13343E"/>
+  <rect x="636" y="266" width="390" height="24" rx="12" fill="#13343E"/>
+  <circle cx="654" cy="250" r="10" fill="#3BE4C2"/>
+  <circle cx="884" cy="250" r="10" fill="#7EC6FF"/>
+  <circle cx="1095" cy="250" r="10" fill="#FFB86B"/>
+  <path d="M118 334H494" stroke="#173949" stroke-width="3" stroke-linecap="round"/>
+  <path d="M124 360H492" stroke="#173949" stroke-width="3" stroke-linecap="round"/>
+  <text x="104" y="406" fill="#EAF7F3" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="44" font-weight="700">PitchIQ</text>
+  <text x="270" y="406" fill="#7EC6FF" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="28" font-weight="600">Football Intelligence, Reimagined</text>
+  <defs>
+    <linearGradient id="bg" x1="68" y1="64" x2="1328" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0D2430"/>
+      <stop offset="1" stop-color="#08151D"/>
+    </linearGradient>
+  </defs>
+</svg>

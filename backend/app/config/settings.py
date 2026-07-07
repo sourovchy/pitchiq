@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     gemini_temperature: float = Field(default=0.25, ge=0, le=1)
     gemini_max_validation_attempts: int = Field(default=2, ge=1, le=3)
     gemini_timeout_seconds: int = Field(default=45, ge=5, le=300)
+    analysis_cache_enabled: bool = True
+    analysis_cache_size: int = Field(default=128, ge=1, le=1024)
 
     model_config = SettingsConfigDict(
         env_file=".env",

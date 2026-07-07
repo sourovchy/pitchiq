@@ -207,7 +207,7 @@ def test_health_check(client: TestClient) -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy", "service": "tactiq-api"}
+    assert response.json() == {"status": "healthy", "service": "pitchiq-api"}
 
 
 def test_analyze_success(override_service: Any, client: TestClient) -> None:

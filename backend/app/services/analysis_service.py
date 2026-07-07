@@ -1,14 +1,15 @@
 import logging
+from collections import OrderedDict
 
 from pydantic import ValidationError
 
-from app.config.settings import Settings
-from app.core.errors import AnalysisGenerationError
-from app.core.prompt_loader import PromptLoader
-from app.schemas.analysis import AnalysisRequest, AnalysisResponse
-from app.services.context_builder import build_football_context
-from app.services.gemini_service import JsonGenerationService
-from app.services.knowledge_service import KnowledgeService
+from ..config.settings import Settings
+from ..core.errors import AnalysisGenerationError
+from ..core.prompt_loader import PromptLoader
+from ..schemas.analysis import AnalysisRequest, AnalysisResponse
+from .context_builder import build_football_context
+from .gemini_service import JsonGenerationService
+from .knowledge_service import KnowledgeService
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,42 @@ class AnalysisService:
         self._prompt_loader = prompt_loader
         self._settings = settings
         self._knowledge = knowledge
+        self._cache_enabled = settings.analysis_cache_enabled
+        self._cache_size = settings.analysis_cache_size
+        self._cache: "OrderedDict[tuple[str, str], AnalysisResponse]" = OrderedDict()
+        self._cache_hits = 0
+        self._cache_misses = 0
+
+    def _cache_key(self, request: AnalysisRequest) -> tuple[str, str]:
+        return (
+            request.home_team.strip().casefold(),
+            request.away_team.strip().casefold(),
+        )
+
+    def cache_info(self) -> dict[str, int]:
+        return {
+            "enabled": int(self._cache_enabled),
+            "size": self._cache_size,
+            "entries": len(self._cache),
+            "hits": self._cache_hits,
+            "misses": self._cache_misses,
+        }
 
     async def analyze(self, request: AnalysisRequest) -> AnalysisResponse:
+        cache_key = self._cache_key(request)
+        if self._cache_enabled:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                self._cache.move_to_end(cache_key)
+                self._cache_hits += 1
+                logger.debug(
+                    "Tactical analysis cache hit for %s vs %s",
+                    request.home_team,
+                    request.away_team,
+                )
+                return cached
+            self._cache_misses += 1
+
         logger.debug(
             "Tactical analysis requested for %s vs %s",
             request.home_team,
@@ -109,6 +144,11 @@ class AnalysisService:
                     logger.info(
                         "Tactical analysis recovered on attempt %s", attempt
                     )
+                if self._cache_enabled:
+                    self._cache[cache_key] = analysis
+                    self._cache.move_to_end(cache_key)
+                    while len(self._cache) > self._cache_size:
+                        self._cache.popitem(last=False)
                 return analysis
             except (ValidationError, ValueError) as error:
                 validation_error = str(error)

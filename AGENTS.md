@@ -2,9 +2,9 @@
 
 ## Mission
 
-Build a memorable, production-minded football intelligence MVP for Hack Days CUET 2026. Optimize decisions for a solo developer and a 24-hour build window. Prefer clear, reversible solutions over speculative abstractions.
+Build and maintain a production-ready, single-purpose football intelligence platform. Optimize for clarity, reversible design decisions, and independently deployable components.
 
-PitchIQ turns two FIFA World Cup 2026 team names into a structured, schema-validated tactical brief. The MVP is single-purpose; do not add new modules, screens, or AI capabilities without explicit approval.
+PitchIQ turns two FIFA World Cup 2026 team names into a structured, schema-validated tactical brief. The codebase is single-purpose; do not add new modules, screens, or AI capabilities without explicit approval.
 
 ## Repository rules
 
@@ -94,6 +94,7 @@ Prefer feature-local code until it is genuinely shared. Avoid index/barrel files
 - Do not claim live football knowledge unless a verified data source is introduced. The bundled `app/knowledge/` JSON is the only authoritative source.
 - Never log API keys, full secrets, or sensitive request headers.
 - Prompt files are markdown with `$variable` placeholders; `PromptLoader.load` substitutes them with `string.Template`.
+- `AnalysisService` memoises successful responses in-process with `functools.lru_cache`. Keys are the canonical `(home, away)` pair from `KnowledgeService`. Toggled by `analysis_cache_enabled` (default `True`), sized by `analysis_cache_size` (default `128`, range `1–1024`). `AnalysisService.cache_info()` exposes `hits` / `misses` / `maxsize` / `currsize` for tests and observability. Scope is per-process; not shared across Cloud Run instances and not persisted.
 
 ## Environment variables
 
@@ -104,6 +105,8 @@ Prefer feature-local code until it is genuinely shared. Avoid index/barrel files
 | `GEMINI_TEMPERATURE` | `0.25` | Must satisfy `0 <= value <= 1`. |
 | `GEMINI_MAX_VALIDATION_ATTEMPTS` | `2` | Must satisfy `1 <= value <= 3`. |
 | `GEMINI_TIMEOUT_SECONDS` | `45` | Must satisfy `5 <= value <= 300`. |
+| `ANALYSIS_CACHE_ENABLED` | `true` | Boolean toggle for the in-process analysis LRU cache. |
+| `ANALYSIS_CACHE_SIZE` | `128` | `lru_cache(maxsize=...)` for `AnalysisService`; `1 <= value <= 1024`. |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated origins. |
 | `PORT` | `8080` | Container port. Cloud Run sets this. |
 | `APP_ENV` | `development` | Disables docs/redoc when `production`. |

@@ -63,6 +63,7 @@ PitchIQ received the Google Cloud – Best Use of Google Cloud award at Hack Day
 - **Independent deployable halves.** React frontend on Firebase Hosting, FastAPI backend on Google Cloud Run. No serving of static assets from FastAPI, no long-lived state in the API.
 - **Production hardening included.** CORS allow-list, structured error responses, immutable cache headers for hashed bundles in `frontend/nginx.conf`, SPA fallback via nginx, FastAPI health endpoint at `/health` (Cloud Run probe) plus an nginx-served `/healthz` for the frontend container, secrets via Secret Manager.
 - **No live-knowledge claims.** The system prompt forbids inventing injuries, lineups, transfers, or live match facts. When personnel are uncertain the model describes the unit or role instead.
+- **In-process result cache.** Analysis responses are cached in-process so identical matchup requests return in milliseconds on repeat calls; see [PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md#in-process-analysis-cache) for configuration knobs.
 
 ---
 
